@@ -336,9 +336,9 @@ def recification_normalisation(img, mask):
 def predict_and_store(model, mode, dataset, image_gen, data_size, folder, x, y, root_folder):
     input_image_size = (x,y)
 
-    folder_out = '{}}/{}/{}'.format(root_folder, mode, dataset)
-    folder_out_mask = '{}}/{}/{}_mask'.format(root_folder, mode, dataset)
-    folder_out_rec = '{}}/{}/{}_rec'.format(root_folder, mode, dataset)
+    folder_out = '{}/{}/{}'.format(root_folder, mode, dataset)
+    folder_out_mask = '{}/{}/{}_mask'.format(root_folder, mode, dataset)
+    folder_out_rec = '{}/{}/{}_rec'.format(root_folder, mode, dataset)
     
     pathlib.Path(folder_out).mkdir(parents=True, exist_ok=True) 
     pathlib.Path(folder_out_mask).mkdir(parents=True, exist_ok=True)
