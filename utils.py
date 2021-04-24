@@ -384,8 +384,8 @@ def calc_predictions(model, dataset=None, num=2):
         for i in range(0, num):
             image, mask = next(dataset)
             pred_mask = model.predict(image)
-            dice.append(dice_coef(sample_mask[0], pred_mask[0]))
-            jaccard.append(jaccard_distance(sample_mask[0], pred_mask[0]))
+            dice.append(dice_coef(mask[0], pred_mask[0]))
+            jaccard.append(jaccard_distance(mask[0], pred_mask[0]))
             #display([image[0], mask[0], pred_mask[0]])
     print("Dice", np.mean(dice))
     print("Jaccard", np.mean(jaccard))
