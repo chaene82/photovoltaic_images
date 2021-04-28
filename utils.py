@@ -26,7 +26,7 @@ import autokeras as ak
 
 class RuntimeLogger:
     def __init__(self, log_dir: str, model: str, epoch: int):
-        self.runtime_filepath = os.path.join(log_dir, str(model)+".json")
+        self.runtime_filepath = os.path.join(log_dir, str(model)+ "_" + str(epoch) + ".json")
         self.runtime_dict = {}
         self.runtime_dict.update({'model_name': model})
         self.runtime_dict.update({'epoch': epoch})
