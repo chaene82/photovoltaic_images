@@ -282,7 +282,8 @@ def recification_normalisation(img, mask):
     contours, hierarchy = cv2.findContours(thresh,  
     cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-    threshold = 0.1
+    lower_threshold = 0.3
+    upper_threshold = 0.6
     
     total_area = 0
     bigest_cnt = []
@@ -297,7 +298,7 @@ def recification_normalisation(img, mask):
         approx = cv2.approxPolyDP(cnt, 0.03 * peri, True)
         area = cv2.contourArea(cnt)
         if len(approx) == 4:
-            if area > total_area * threshold:
+            if area > total_area * lower_threshold and area < total_area * upper_threshold:
                 bigest_cnt.append(cnt)
     
     rec_images = []
@@ -349,6 +350,8 @@ def predict_and_store(model, mode, dataset, image_gen, data_size, folder, x, y, 
         filename = image_gen[i]['file_name'].split('/')[2]
         outfile = folder_out + "/" + filename
         outfile_mask = folder_out_mask + "/" + filename
+        if i % 250 == 0:
+            print('number of images predicted', i)
         try:
             image = getImage(image_gen[i], folder, input_image_size)
             img[0] = image
@@ -369,13 +372,15 @@ def predict_and_store(model, mode, dataset, image_gen, data_size, folder, x, y, 
 
         try:
             rec_images = recification_normalisation(image, mask)
-            i = 0
+            j = 0
             for rec_img in rec_images:
-                outfile_rec = folder_out_rec + "/" + str(i) + filename
+                outfile_rec = folder_out_rec + "/" + str(j) + filename
                 save_img(outfile_rec, rec_img)
-                i += 1
+                j += 1
         except:
             print("recification for image not possible")
+        
+
 
 def calc_predictions(model, dataset=None, num=2):
     dice = []
