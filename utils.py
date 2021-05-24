@@ -15,6 +15,8 @@ import os
 from time import time
 from datetime import datetime
 import keras
+from sklearn.model_selection import train_test_split
+
 
 
 import json
@@ -23,6 +25,9 @@ from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_a
 
 import autokeras as ak
 
+tf.get_logger().setLevel('ERROR')
+import warnings
+warnings.filterwarnings('ignore')
 
 class RuntimeLogger:
     def __init__(self, log_dir: str, model: str, epoch: int):
@@ -97,7 +102,7 @@ def filterDataset(folder, mode='train'):
     return unique_images, dataset_size, coco
 
 
-def filterDatasetDeepSolarEye(folder):
+def filterDatasetDeepSolarEye(folder, offset=0):
     """[summary]
 
     Args:
@@ -107,7 +112,7 @@ def filterDatasetDeepSolarEye(folder):
     Returns:
         [type]: [description]
     """
-    onlyfiles = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+    onlyfiles = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))][offset:]
     unique_images = []
     for file in onlyfiles:
         file_obj = {'file_name' : "//" + file}
@@ -432,9 +437,9 @@ def train_keras(model_name, folder, nr_images_batch, nr_batch, nr_epoch, max_tri
             # Initialize the image regressor.
         reg = ak.ImageRegressor(
             project_name=model_name,
-            metrics=[tf.keras.metrics.MeanSquaredError(),
-                    tf.keras.metrics.RootMeanSquaredError(),
-                    tf.keras.metrics.MeanAbsoluteError()],
+          #  metrics=[tf.keras.metrics.MeanSquaredError(),
+          #          tf.keras.metrics.RootMeanSquaredError(),
+          #          tf.keras.metrics.MeanAbsoluteError()],
             overwrite=False,
             max_trials=max_trials)
     
@@ -468,26 +473,41 @@ def train_keras(model_name, folder, nr_images_batch, nr_batch, nr_epoch, max_tri
             #x = (x - 128.0) / 128.0
             dataset[i] = x
             j += 1
-            if j % 25 == 0:
+            if j % 1000 == 0:
                 print("%d images to array" % j)
         print("All images to array!")
 
         #Splitting 
         X_train = dataset
-        #X_train, X_val, y_train, y_test = train_test_split(dataset, y_train, test_size=0.0, random_state=33)
+        #X_train, X_test, y_train, y_test = train_test_split(dataset, y_train, test_size=0.2, random_state=33)
         #X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.5, random_state=33)
         #print("Train set size: {0}, Val set size: {1}, Test set size: {2}".format(len(X_train), len(X_val), len(X_test)))
-
+        #print(y_train[0])
+        
         # Feed the image regressor with training data.
         if i + 1 == nr_batch:
             print("Last run, eval the model")
-            model = reg.evaluate(dataset, y_train)
-            return model
+            y_hat = reg.predict(dataset)
+            m = tf.keras.metrics.MeanSquaredError(
+                name="mean_squared_error", dtype=None
+            )
+            m.update_state(y_hat, y_train)
+            mse = m.result().numpy()
+            m = tf.keras.metrics.RootMeanSquaredError(
+                name="root_mean_squared_error", dtype=None
+            )
+            m.update_state(y_hat, y_train)
+            rmse = m.result().numpy()
+            m = tf.keras.metrics.MeanAbsoluteError(
+                name="mean_absolute_error", dtype=None
+            )
+            m.update_state(y_hat, y_train)   
+            mae = m.result().numpy()
+            return reg, mse, rmse, mae
         else:
             reg.fit(X_train, 
                 y_train, 
-                batch_size=25,
                 validation_split=0.2,
-                callbacks=[tensorboard_callback],
+                batch_size=25,
                 epochs=nr_epoch)
         
