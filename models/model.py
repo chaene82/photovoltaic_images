@@ -4,13 +4,13 @@ from tensorflow_examples.models.pix2pix import pix2pix
 
 
 def deeplabv3_mobilenetv2(input):
-    """[summary]
+    """build a model (deeplab with mobile net v2 as backend)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = Deeplabv3(input_shape=input, classes=1, backbone='mobilenetv2')
     
@@ -21,13 +21,13 @@ def deeplabv3_mobilenetv2(input):
 
 
 def deeplabv3_xception(input):
-    """[summary]
+    """build a model (deeplab with xception as backend)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = Deeplabv3(input_shape=input, classes=1, backbone='xception')
     
@@ -37,38 +37,15 @@ def deeplabv3_xception(input):
     return base_model    
 
 
-def deepsolar(input):
-    """[summary]
-
-    Args:
-        input ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    base_model = tf.keras.applications.InceptionV3(input_shape=[192,192,3], include_top=False)
-    base_model.trainable = False
-    
-    add_model = Sequential()
-    add_model.add(base_model)
-    add_model.add(GlobalAveragePooling2D())
-    add_model.add(Dropout(0.5))
-    add_model.add(Dense(nclass, 
-                    activation='softmax'))
-    
-    model = add_model
-    return down_stack
-
-
 def unet_model(output_channels, down_stack):
-    """[summary]
+    """generate a unet architecture, based on a input model
 
     Args:
-        output_channels ([type]): [description]
-        down_stack ([type]): [description]
+        output_channels (int): number of object channels
+        down_stack (model): the pretrained model
 
     Returns:
-        [type]: [description]
+        model: a keras model including the pretrained model in a unet architecutre
     """
     
     up_stack = [
@@ -101,13 +78,13 @@ def unet_model(output_channels, down_stack):
 
 
 def vgg19(input):
-    """[summary]
+    """build a model, based on a pre trained modell (vgg19)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.VGG19(input_shape=input, include_top=False)
 
@@ -132,13 +109,13 @@ def vgg19(input):
 
 
 def resnet152v2(input):
-    """[summary]
+    """build a model, based on a pre trained modell (resnet152v2)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.ResNet152V2(input_shape=input, include_top=False)
 
@@ -163,13 +140,13 @@ def resnet152v2(input):
 
 
 def resnet101v2(input):
-    """[summary]
+    """build a model, based on a pre trained modell (resnet101v2)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.ResNet101V2(input_shape=input, include_top=False)
 
@@ -194,13 +171,13 @@ def resnet101v2(input):
 
 
 def resnet152(input):
-    """[summary]
+    """build a model, based on a pre trained modell (resnet152)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.ResNet152(input_shape=input, include_top=False)
 
@@ -225,13 +202,13 @@ def resnet152(input):
 
 
 def resnet50v2(input):
-    """[summary]
+    """build a model, based on a pre trained modell (resnet50v2)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.ResNet50V2(input_shape=input, include_top=False)
 
@@ -256,13 +233,13 @@ def resnet50v2(input):
 
 
 def resnet50(input):
-    """[summary]
+    """build a model, based on a pre trained modell (resnet50)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.ResNet50(input_shape=input, include_top=False)
 
@@ -287,13 +264,13 @@ def resnet50(input):
 
 
 def mobile_net(input):
-    """[summary]
+    """build a model, based on a pre trained modell (mobile_net)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.MobileNet(input_shape=input, alpha = 0.5, include_top=False)
 
@@ -318,13 +295,13 @@ def mobile_net(input):
 
 
 def mobile_net_v2(input):
-    """[summary]
+    """build a model, based on a pre trained modell (mobile_net_v2)
 
     Args:
-        input ([type]): [description]
+        input (tuple): the size of the images
 
     Returns:
-        [type]: [description]
+        model: a model definition
     """
     base_model = tf.keras.applications.MobileNetV2(input_shape=input, include_top=False)
 

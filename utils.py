@@ -30,7 +30,16 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class RuntimeLogger:
+    """Logging Class 
+    """
     def __init__(self, log_dir: str, model: str, epoch: int):
+        """Initialize the log
+
+        Args:
+            log_dir (str): directory of the log
+            model (str): name of the model
+            epoch (int): number of Epochs for training
+        """
         self.runtime_filepath = os.path.join(log_dir, str(model)+ "_" + str(epoch) + ".json")
         self.runtime_dict = {}
         self.runtime_dict.update({'model_name': model})
@@ -38,31 +47,49 @@ class RuntimeLogger:
         self.global_start_time = None
         
     def start(self):
+        """start the log
+        """
         self.global_start_time = time()
         
     def log_task_end(self, task_name: str, task_start_time: float):
+        """write a log task
+
+        Args:
+            task_name (str): name of the task
+            task_start_time (float): datetime, when the task started
+        """
         task_runtime = time() - task_start_time
         self.runtime_dict.update({task_name: task_runtime})
         
     def add_metric(self, name: str, value: float):
+        """add a log entry for a metric
+
+        Args:
+            name (str): name of the metric
+            value (float): value of the metric
+        """
         self.runtime_dict.update({name: float(value)})
         
     def log_experiment_end(self):
+        """end the log and write the file
+        """
         self.log_task_end('global_runtime', self.global_start_time)
         json.dump(self.runtime_dict, 
                   open(self.runtime_filepath, 'w'), indent=4)
 
 
 def unnormalizeAnns(anns, x, y):
-    """[summary]
+    """MS Coco return the value for the polygone as a number between 0 and 1. For the 
+    deep learning algorith, a value from 0 to the [max picel] is needed. This function
+    convert this value.
 
     Args:
-        anns ([type]): [description]
-        x ([type]): [description]
-        y ([type]): [description]
+        anns (coco): The anns file
+        x (int): resolution of the x axis 
+        y (int): resolition of the y axis
 
     Returns:
-        [type]: [description]
+        [coco]: The anns file
     """
     for i in range(0, len(anns['segmentation'][0])):
         if anns['segmentation'][0][i] < 1 :
@@ -74,14 +101,16 @@ def unnormalizeAnns(anns, x, y):
 
 
 def filterDataset(folder, mode='train'):
-    """[summary]
+    """Get a filtered Dataset representing the image folder
 
     Args:
-        folder ([type]): [description]
-        mode (str, optional): [description]. Defaults to 'train'.
+        folder (str): the folder path
+        mode (str, optional): train/val/test. Defaults to 'train'.
 
     Returns:
-        [type]: [description]
+        unique_images: A list of unique images
+        dataset_size: The size of the dataset
+        coco: the coco file
     """
     annFile = '{}/annotations/instances_{}.json'.format(folder, mode)
     coco = COCO(annFile)
@@ -103,14 +132,16 @@ def filterDataset(folder, mode='train'):
 
 
 def filterDatasetDeepSolarEye(folder, offset=0):
-    """[summary]
+    """Get a filtered Dataset representing the deep solar image folder
 
     Args:
-        folder ([type]): [description]
-        mode (str, optional): [description]. Defaults to 'train'.
+        folder (str): the folder path
+        offset (int, optional): a starting offset. Defaults to 0.
 
     Returns:
-        [type]: [description]
+        unique_images: A list of unique images
+        dataset_size: The size of the dataset
+        None: nothing
     """
     onlyfiles = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))][offset:]
     unique_images = []
@@ -121,32 +152,16 @@ def filterDatasetDeepSolarEye(folder, offset=0):
     
     return unique_images, dataset_size, None
 
-def getClassName(classID, cats):
-    """[summary]
-
-    Args:
-        classID ([type]): [description]
-        cats ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    for i in range(len(cats)):
-        if cats[i]['id']==classID:
-            return cats[i]['name']
-    return None
-
-
 def getImage(imageObj, img_folder, input_image_size):
-    """[summary]
+    """get a image for the folder
 
     Args:
-        imageObj ([type]): [description]
-        img_folder ([type]): [description]
-        input_image_size ([type]): [description]
+        imageObj (Object): a image object
+        img_folder (str): a folder path
+        input_image_size (tuple): the size of the image
 
     Returns:
-        [type]: [description]
+        img: a image array with 3 color channels
     """
     # Read and normalize an image
     train_img = io.imread(img_folder + '/' + imageObj['file_name'].split('/')[2])/255.0
@@ -160,16 +175,16 @@ def getImage(imageObj, img_folder, input_image_size):
 
 
 def getBinaryMask(imageObj, coco, catIds, input_image_size, x, y):
-    """[summary]
+    """get a binary mask from a Coco file
 
     Args:
-        imageObj ([type]): [description]
-        coco ([type]): [description]
-        catIds ([type]): [description]
-        input_image_size ([type]): [description]
+        imageObj (object): the image object
+        coco (coco): the coco file
+        catIds (list): a list of categories
+        input_image_size (tuple): the image size
 
     Returns:
-        [type]: [description]
+        image array: a mask as a images array
     """
     annIds = coco.getAnnIds(imageObj['id'], catIds=catIds, iscrowd=None)
     anns = coco.loadAnns(annIds)
@@ -196,18 +211,18 @@ def getBinaryMask(imageObj, coco, catIds, input_image_size, x, y):
 
 def dataGeneratorCoco(images, coco, folder, 
                       input_image_size=(128,128), batch_size=4, mode='train'):
-    """[summary]
+    """This function generates a Tensorflow Data Genaerator for images
 
     Args:
-        images ([type]): [description]
-        coco ([type]): [description]
-        folder ([type]): [description]
-        input_image_size (tuple, optional): [description]. Defaults to (128,128).
-        batch_size (int, optional): [description]. Defaults to 4.
-        mode (str, optional): [description]. Defaults to 'train'.
+        images (list): a list of images
+        coco (coco): the coco file
+        folder (str): the path to the folder
+        input_image_size (tuple, optional): The image size. Defaults to (128,128).
+        batch_size (int, optional): The number of pictures to return. Defaults to 4.
+        mode (str, optional): train/test/val. Defaults to 'train'.
 
     Yields:
-        [type]: [description]
+        img, mask: a images and the coresponding mask
     """
     
     img_folder = '{}/'.format(folder)
@@ -257,10 +272,10 @@ def dataGeneratorCoco(images, coco, folder,
 
 
 def display(display_list):
-    """[summary]
+    """Display pictures
 
     Args:
-        display_list ([type]): [description]
+        display_list (list): A list of image arrays
     """
     plt.figure(figsize=(15, 15))
 
@@ -275,11 +290,28 @@ def display(display_list):
 
 
 def crop(image):
+    """Crop a images
+
+    Args:
+        image (array): a input images
+
+    Returns:
+        array: a croped image
+    """
     y_nonzero, x_nonzero, _ = np.nonzero(image)
     return image[np.min(y_nonzero):np.max(y_nonzero), np.min(x_nonzero):np.max(x_nonzero)]
 
 
 def recification_normalisation(img, mask):
+    """this function cuts a part of a image by using the mask and make a rectification
+
+    Args:
+        img (array): the imput image
+        mask (array): the output array
+
+    Returns:
+        image: a rectificated image
+    """
     img1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret,thresh=cv2.threshold(mask,200,255,cv2.THRESH_BINARY_INV)
     
@@ -340,6 +372,19 @@ def recification_normalisation(img, mask):
 
 
 def predict_and_store(model, mode, dataset, image_gen, data_size, folder, x, y, root_folder):
+    """predict a mask based on a image and store the result to a folder
+
+    Args:
+        model (model): a deep learning model
+        mode (str): train/val/test
+        dataset (str): the name of the dataset
+        image_gen (Tensorflow Generator): a generator representing the images
+        data_size (int): the size of the data set
+        folder (str): the path to the folder
+        x (int): the x resolution
+        y (int): the y resolution
+        root_folder (str): the name of the root folder
+    """
     input_image_size = (x,y)
 
     folder_out = '{}/{}/{}'.format(root_folder, mode, dataset)
@@ -388,6 +433,16 @@ def predict_and_store(model, mode, dataset, image_gen, data_size, folder, x, y, 
 
 
 def calc_predictions(model, dataset=None, num=2):
+    """calculate the dice and jaccard metric
+
+    Args:
+        model (model): a deep learning model
+        dataset (dataset, optional): The dataset generator. Defaults to None.
+        num (int, optional): the number of images to use. Defaults to 2.
+
+    Returns:
+        metrix: Values for dice and jaccard
+    """
     dice = []
     jaccard = []
     if dataset:
@@ -404,6 +459,15 @@ def calc_predictions(model, dataset=None, num=2):
 
 
 def dice_coef(y_true, y_pred):
+    """calculate the dice coefficient
+
+    Args:
+        y_true (array): array of the true mask
+        y_pred (array): array of the predicted mask
+
+    Returns:
+        float: the dice coefficient
+    """
     y_true_f = tf.reshape(tf.dtypes.cast(y_true, tf.float32), [-1])
     y_pred_f = tf.reshape(tf.dtypes.cast(y_pred, tf.float32), [-1])
     intersection = tf.reduce_sum(y_true_f * y_pred_f)
@@ -411,22 +475,48 @@ def dice_coef(y_true, y_pred):
 
 
 def jaccard_distance(y_true, y_pred, smooth=100):
-    """ Calculates mean of Jaccard distance as a loss function """
+    """Calculates mean of Jaccard distance as a loss function
+
+    Args:
+        y_true (array): array of the true mask
+        y_pred (array): array of the predicted mask
+        smooth (int, optional): smooth value. Defaults to 100.
+
+    Returns:
+        float: the jaccard distance
+    """
+
+
     intersection = tf.reduce_sum(y_true * y_pred, axis=(1,2))
     sum_ = tf.reduce_sum(y_true + y_pred, axis=(1,2))
     jac = (intersection + smooth) / (sum_ - intersection + smooth)
     jd =  (1 - jac) * smooth
     return tf.reduce_mean(jd)  
 
+
 def train_keras(model_name, folder, nr_images_batch, nr_batch, nr_epoch, max_trials=10):
+    """Training function for the regression
+
+    Args:
+        model_name (str): the name of the segmentation model
+        folder (str): the path to the images
+        nr_images_batch (int): number of images per batch
+        nr_batch (int): number of batches
+        nr_epoch (int): number of epochs
+        max_trials (int, optional): number of trails for AutoKeras. Defaults to 10.
+
+    Returns:
+        mse: metric Mean Squared Error
+        rmse: metric Root Mean Squared Error
+        mae: metric Mean Absolut Error
+        model: the trained model
+    """
     
     image_width = 192
     image_height = 192
     ratio = 1
     channels = 3
-    
-
-        
+            
     logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
